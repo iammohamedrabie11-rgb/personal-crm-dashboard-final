@@ -101,7 +101,7 @@ export function useFinanceData() {
           ...snapshot,
           finance: {
             ...snapshot.finance,
-            accounts: [{ ...account, id: createId("account") }, ...snapshot.finance.accounts],
+            accounts: [{ ...account, id: createId() }, ...snapshot.finance.accounts],
           },
         }));
       },
@@ -136,7 +136,7 @@ export function useFinanceData() {
           ...snapshot,
           finance: {
             ...snapshot.finance,
-            expenses: [{ ...expense, id: createId("expense") }, ...snapshot.finance.expenses],
+            expenses: [{ ...expense, id: createId() }, ...snapshot.finance.expenses],
           },
         }));
       },
@@ -165,7 +165,7 @@ export function useFinanceData() {
           ...snapshot,
           finance: {
             ...snapshot.finance,
-            budgets: [{ ...budget, id: createId("budget") }, ...snapshot.finance.budgets],
+            budgets: [{ ...budget, id: createId() }, ...snapshot.finance.budgets],
           },
         }));
       },
@@ -195,7 +195,7 @@ export function useFinanceData() {
           finance: {
             ...snapshot.finance,
             plannedPayments: [
-              { ...payment, id: createId("payment") },
+              { ...payment, id: createId() },
               ...snapshot.finance.plannedPayments,
             ],
           },

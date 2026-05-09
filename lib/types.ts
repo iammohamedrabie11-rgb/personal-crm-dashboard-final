@@ -19,7 +19,10 @@ export interface Lead {
   expectedCommission: number;
   nextFollowUpDate: string; // ISO date string
   notes: string;
+  phone: string;
+  email: string;
   createdAt: string; // ISO date string
+  updatedAt?: string; // ISO date string, set by DB trigger
 }
 
 export interface IncomeEntry {

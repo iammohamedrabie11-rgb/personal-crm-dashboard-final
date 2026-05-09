@@ -3,16 +3,60 @@
 import { DashboardCard } from "@/components/DashboardCard";
 import { LeadsTable } from "@/components/LeadsTable";
 import { useCrmData } from "@/lib/crmStorage";
+import { useGoalSettings } from "@/lib/goalSettings";
 import { calculateDashboardStats, formatCurrency, getDaysUntil } from "@/lib/utils";
+
+function GoalProgressFooter({
+  income,
+  goal,
+}: {
+  income: number;
+  goal: number;
+}) {
+  const today = new Date();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const daysLeft = daysInMonth - today.getDate();
+  const percent = goal > 0 ? Math.min((income / goal) * 100, 100) : 0;
+  const remaining = Math.max(goal - income, 0);
+  const reached = income >= goal;
+
+  return (
+    <div className="space-y-2">
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-700">
+        <div
+          className={`h-full rounded-full transition-all ${reached ? "bg-emerald-400" : "bg-blue-500"}`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
+        <span>
+          {formatCurrency(income)} / {formatCurrency(goal)}
+        </span>
+        <span className={reached ? "font-semibold text-emerald-400" : ""}>
+          {reached ? "Goal reached!" : `${formatCurrency(remaining)} left`}
+        </span>
+      </div>
+      <p className="text-xs text-slate-500">
+        {Math.round(percent)}% complete · {daysLeft} day{daysLeft !== 1 ? "s" : ""} left in month
+      </p>
+    </div>
+  );
+}
 
 export default function Home() {
   const { leads, incomeEntries } = useCrmData();
+  const { goal } = useGoalSettings();
   const stats = calculateDashboardStats(leads, incomeEntries);
 
   const urgentFollowUps = leads
     .filter((lead) => lead.status === "Follow-up" || lead.status === "Proposal Sent")
     .sort((a, b) => getDaysUntil(a.nextFollowUpDate) - getDaysUntil(b.nextFollowUpDate))
     .slice(0, 5);
+
+  const goalFooter =
+    goal.monthlyIncomeGoal > 0 ? (
+      <GoalProgressFooter income={stats.totalMonthlyIncome} goal={goal.monthlyIncomeGoal} />
+    ) : undefined;
 
   return (
     <main className="min-h-screen bg-slate-950">
@@ -27,6 +71,7 @@ export default function Home() {
             title="Monthly Income"
             value={formatCurrency(stats.totalMonthlyIncome)}
             trend="up"
+            footer={goalFooter}
           />
           <DashboardCard
             title="Closed Deals"

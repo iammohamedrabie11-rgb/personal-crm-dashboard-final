@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:localhost)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(Test-Path *)"
+    ]
+  }
+}

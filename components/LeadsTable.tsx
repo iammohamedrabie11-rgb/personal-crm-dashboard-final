@@ -7,10 +7,11 @@ interface LeadsTableProps {
   leads: Lead[];
   onEdit?: (lead: Lead) => void;
   onDelete?: (leadId: string) => void;
+  onSuggest?: (lead: Lead) => void;
 }
 
-export function LeadsTable({ leads, onEdit, onDelete }: LeadsTableProps) {
-  const hasActions = Boolean(onEdit || onDelete);
+export function LeadsTable({ leads, onEdit, onDelete, onSuggest }: LeadsTableProps) {
+  const hasActions = Boolean(onEdit || onDelete || onSuggest);
 
   return (
     <div className="overflow-x-auto">
@@ -50,6 +51,25 @@ export function LeadsTable({ leads, onEdit, onDelete }: LeadsTableProps) {
               {hasActions && (
                 <td className="px-3 py-2.5 text-right">
                   <div className="flex justify-end gap-2">
+                    {lead.phone && (
+                      <a
+                        href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-md bg-emerald-900 px-2 py-1 font-medium text-emerald-200 transition-colors hover:bg-emerald-800"
+                      >
+                        WA
+                      </a>
+                    )}
+                    {onSuggest && (
+                      <button
+                        type="button"
+                        onClick={() => onSuggest(lead)}
+                        className="rounded-md bg-violet-900 px-2 py-1 font-medium text-violet-200 transition-colors hover:bg-violet-800"
+                      >
+                        Suggest
+                      </button>
+                    )}
                     {onEdit && (
                       <button
                         type="button"

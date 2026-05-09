@@ -42,7 +42,7 @@ export function useCrmData() {
     () => ({
       leads: data.leads,
       incomeEntries: data.incomeEntries,
-      addLead: (lead: Omit<Lead, "id" | "createdAt">) => {
+      addLead: (lead: Omit<Lead, "id" | "createdAt" | "updatedAt">) => {
         updateHistory((snapshot) => ({
           ...snapshot,
           crm: {
@@ -50,7 +50,7 @@ export function useCrmData() {
             leads: [
               {
                 ...lead,
-                id: createId("lead"),
+                id: createId(),
                 createdAt: new Date().toISOString().split("T")[0],
               },
               ...snapshot.crm.leads,
@@ -63,7 +63,9 @@ export function useCrmData() {
           ...snapshot,
           crm: {
             ...snapshot.crm,
-            leads: snapshot.crm.leads.map((item) => (item.id === lead.id ? lead : item)),
+            leads: snapshot.crm.leads.map((item) =>
+              item.id === lead.id ? lead : item
+            ),
           },
         }));
       },
@@ -85,7 +87,7 @@ export function useCrmData() {
           crm: {
             ...snapshot.crm,
             incomeEntries: [
-              { ...entry, id: createId("income") },
+              { ...entry, id: createId() },
               ...snapshot.crm.incomeEntries,
             ],
           },
@@ -107,7 +109,9 @@ export function useCrmData() {
           ...snapshot,
           crm: {
             ...snapshot.crm,
-            incomeEntries: snapshot.crm.incomeEntries.filter((entry) => entry.id !== entryId),
+            incomeEntries: snapshot.crm.incomeEntries.filter(
+              (entry) => entry.id !== entryId
+            ),
           },
         }));
       },

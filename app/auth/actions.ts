@@ -100,3 +100,39 @@ export async function logout(_formData?: FormData) {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+export async function requestPasswordReset(
+  _state: AuthFormState,
+  formData: FormData
+): Promise<AuthFormState> {
+  const email = getRequiredText(formData, "email");
+  if (!email) return { error: "Enter your email address." };
+
+  const origin = await getRequestOrigin();
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: origin
+      ? `${origin}/auth/callback?next=/auth/update-password`
+      : undefined,
+  });
+
+  if (error) return { error: error.message };
+
+  return { message: "Check your email for a password reset link." };
+}
+
+export async function updatePassword(
+  _state: AuthFormState,
+  formData: FormData
+): Promise<AuthFormState> {
+  const password = getPassword(formData);
+  if (!password) return { error: "Enter a new password." };
+  if (password.length < 6) return { error: "Password must be at least 6 characters." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) return { error: error.message };
+
+  redirect("/");
+}

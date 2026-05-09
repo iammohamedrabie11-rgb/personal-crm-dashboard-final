@@ -8,9 +8,10 @@ interface DashboardCardProps {
   icon?: React.ReactNode;
   subtext?: string;
   trend?: "up" | "down" | "neutral";
+  footer?: React.ReactNode;
 }
 
-export function DashboardCard({ title, value, icon, subtext, trend }: DashboardCardProps) {
+export function DashboardCard({ title, value, icon, subtext, trend, footer }: DashboardCardProps) {
   return (
     <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-5 backdrop-blur-sm transition-all hover:border-slate-600 hover:bg-slate-800/60">
       <div className="flex items-start justify-between gap-3">
@@ -39,6 +40,7 @@ export function DashboardCard({ title, value, icon, subtext, trend }: DashboardC
           <span className="text-slate-400">{trend}</span>
         </div>
       )}
+      {footer && <div className="mt-4">{footer}</div>}
     </div>
   );
 }

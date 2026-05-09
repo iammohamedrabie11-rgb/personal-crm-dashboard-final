@@ -6,7 +6,13 @@ import { Navigation } from "@/components/Navigation";
 import { UndoRedoControls } from "@/components/UndoRedoControls";
 
 function isAuthRoute(pathname: string) {
-  return pathname === "/login" || pathname === "/signup" || pathname.startsWith("/auth/");
+  return (
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/auth/reset-password" ||
+    pathname === "/auth/update-password" ||
+    pathname.startsWith("/auth/")
+  );
 }
 
 export function AuthShell({ children }: { children: ReactNode }) {

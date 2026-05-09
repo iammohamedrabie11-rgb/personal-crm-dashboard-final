@@ -98,6 +98,16 @@ export default function FollowUpsPage() {
         </div>
 
         <div className="mt-4 flex flex-col gap-2 border-t border-slate-700/30 pt-4 sm:flex-row">
+          {lead.phone && (
+            <a
+              href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-emerald-900 px-4 py-2 text-center text-sm font-semibold text-emerald-200 transition-colors hover:bg-emerald-800"
+            >
+              WhatsApp
+            </a>
+          )}
           <input
             type="date"
             value={dateDrafts[lead.id] ?? lead.nextFollowUpDate}

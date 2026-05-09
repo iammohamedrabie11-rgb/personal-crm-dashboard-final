@@ -2,12 +2,15 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
+import { KanbanView } from "@/components/KanbanView";
 import { LeadsTable } from "@/components/LeadsTable";
+import { SuggestMessageModal } from "@/components/SuggestMessageModal";
 import { agencies, leadStatuses, useCrmData } from "@/lib/crmStorage";
+import { calculateCommission, useCommissionRules } from "@/lib/commissionRules";
 import { Agency, Lead, LeadStatus } from "@/lib/types";
 import { formatCurrency, getAgencyColor, getStatusColor } from "@/lib/utils";
 
-type LeadFormState = Omit<Lead, "id" | "createdAt">;
+type LeadFormState = Omit<Lead, "id" | "createdAt" | "updatedAt">;
 
 const today = new Date().toISOString().split("T")[0];
 
@@ -20,10 +23,18 @@ const emptyLeadForm: LeadFormState = {
   expectedCommission: 0,
   nextFollowUpDate: today,
   notes: "",
+  phone: "",
+  email: "",
 };
 
 export default function LeadsPage() {
   const { leads, addLead, updateLead, deleteLead } = useCrmData();
+  const { rules } = useCommissionRules();
+  const [view, setView] = useState<"table" | "kanban">(() => {
+    if (typeof window === "undefined") return "table";
+    return (localStorage.getItem("crm-leads-view") as "table" | "kanban") ?? "table";
+  });
+  const [suggestingLead, setSuggestingLead] = useState<Lead | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [selectedAgency, setSelectedAgency] = useState<string | null>(null);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -47,6 +58,15 @@ export default function LeadsPage() {
     filteredLeads = filteredLeads.filter((lead) => lead.sourceAgency === selectedAgency);
   }
 
+  function switchView(next: "table" | "kanban") {
+    setView(next);
+    localStorage.setItem("crm-leads-view", next);
+  }
+
+  function moveLead(lead: Lead, newStatus: LeadStatus) {
+    updateLead({ ...lead, status: newStatus });
+  }
+
   function openNewLeadForm() {
     setEditingLead(null);
     setForm(emptyLeadForm);
@@ -64,6 +84,8 @@ export default function LeadsPage() {
       expectedCommission: lead.expectedCommission,
       nextFollowUpDate: lead.nextFollowUpDate,
       notes: lead.notes,
+      phone: lead.phone ?? "",
+      email: lead.email ?? "",
     });
     setIsFormOpen(true);
   }
@@ -75,6 +97,8 @@ export default function LeadsPage() {
       clientName: form.clientName.trim(),
       niche: form.niche.trim(),
       notes: form.notes.trim(),
+      phone: form.phone.trim(),
+      email: form.email.trim(),
       dealValue: Number(form.dealValue) || 0,
       expectedCommission: Number(form.expectedCommission) || 0,
     };
@@ -163,9 +187,15 @@ export default function LeadsPage() {
                 Agency
                 <select
                   value={form.sourceAgency}
-                  onChange={(event) =>
-                    setForm({ ...form, sourceAgency: event.target.value as Agency })
-                  }
+                  onChange={(event) => {
+                    const newAgency = event.target.value as Agency;
+                    const auto = calculateCommission(newAgency, form.dealValue, rules);
+                    setForm({
+                      ...form,
+                      sourceAgency: newAgency,
+                      ...(auto !== null ? { expectedCommission: auto } : {}),
+                    });
+                  }}
                   className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                 >
                   {agencies.map((agency) => (
@@ -198,9 +228,15 @@ export default function LeadsPage() {
                   min="0"
                   step="0.01"
                   value={form.dealValue}
-                  onChange={(event) =>
-                    setForm({ ...form, dealValue: Number(event.target.value) })
-                  }
+                  onChange={(event) => {
+                    const newValue = Number(event.target.value);
+                    const auto = calculateCommission(form.sourceAgency, newValue, rules);
+                    setForm({
+                      ...form,
+                      dealValue: newValue,
+                      ...(auto !== null ? { expectedCommission: auto } : {}),
+                    });
+                  }}
                   className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                 />
               </label>
@@ -226,6 +262,24 @@ export default function LeadsPage() {
                   onChange={(event) =>
                     setForm({ ...form, nextFollowUpDate: event.target.value })
                   }
+                  className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                />
+              </label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+                Phone
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(event) => setForm({ ...form, phone: event.target.value })}
+                  className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                />
+              </label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-300">
+                Email
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => setForm({ ...form, email: event.target.value })}
                   className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                 />
               </label>
@@ -321,15 +375,53 @@ export default function LeadsPage() {
         </div>
 
         <div className="mb-8 rounded-xl border border-slate-700/50 bg-slate-800/40 p-6 backdrop-blur-sm">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-white">
               All Leads <span className="font-normal text-slate-400">({filteredLeads.length})</span>
             </h2>
+            <div className="flex overflow-hidden rounded-lg border border-slate-700">
+              <button
+                type="button"
+                onClick={() => switchView("table")}
+                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  view === "table"
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-800 text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Table
+              </button>
+              <button
+                type="button"
+                onClick={() => switchView("kanban")}
+                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  view === "kanban"
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-800 text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                Kanban
+              </button>
+            </div>
           </div>
-          <LeadsTable leads={filteredLeads} onEdit={openEditLeadForm} onDelete={removeLead} />
+          {view === "kanban" ? (
+            <KanbanView
+              leads={filteredLeads}
+              onEdit={openEditLeadForm}
+              onMove={moveLead}
+              onSuggest={setSuggestingLead}
+            />
+          ) : (
+            <LeadsTable
+              leads={filteredLeads}
+              onEdit={openEditLeadForm}
+              onDelete={removeLead}
+              onSuggest={setSuggestingLead}
+            />
+          )}
         </div>
 
-        {filteredLeads.length > 0 ? (
+        {view === "table" && filteredLeads.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {filteredLeads.map((lead) => (
               <div
@@ -384,7 +476,24 @@ export default function LeadsPage() {
                   </div>
                 )}
 
-                <div className="mt-4 flex gap-2">
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {lead.phone && (
+                    <a
+                      href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-md bg-emerald-900 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-800"
+                    >
+                      WhatsApp
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setSuggestingLead(lead)}
+                    className="rounded-md bg-violet-900 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-800"
+                  >
+                    Suggest message
+                  </button>
                   <button
                     type="button"
                     onClick={() => openEditLeadForm(lead)}
@@ -403,11 +512,11 @@ export default function LeadsPage() {
               </div>
             ))}
           </div>
-        ) : (
+        ) : view === "table" ? (
           <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-12 text-center backdrop-blur-sm">
             <p className="text-sm text-slate-400">No leads found matching your filters.</p>
           </div>
-        )}
+        ) : null}
       </div>
       <ConfirmDeleteModal
         isOpen={Boolean(leadToDelete)}
@@ -419,6 +528,12 @@ export default function LeadsPage() {
         onCancel={() => setLeadToDelete(null)}
         onConfirm={confirmLeadDeletion}
       />
+      {suggestingLead && (
+        <SuggestMessageModal
+          lead={suggestingLead}
+          onClose={() => setSuggestingLead(null)}
+        />
+      )}
     </main>
   );
 }

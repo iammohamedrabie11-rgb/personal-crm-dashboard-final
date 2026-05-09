@@ -19,6 +19,8 @@ export const dummyLeads: Lead[] = [
     expectedCommission: 5000,
     nextFollowUpDate: getDateInMonth(10),
     notes: "Very interested in digital marketing for new compound launch. Meeting scheduled for Q2.",
+    phone: "",
+    email: "",
     createdAt: getDateInMonth(1),
   },
   {
@@ -31,6 +33,8 @@ export const dummyLeads: Lead[] = [
     expectedCommission: 3500,
     nextFollowUpDate: getDateInMonth(12),
     notes: "Sent proposal for Instagram ads and Shopify optimization. Waiting for response.",
+    phone: "",
+    email: "",
     createdAt: getDateInMonth(3),
   },
   {
@@ -43,6 +47,8 @@ export const dummyLeads: Lead[] = [
     expectedCommission: 2250,
     nextFollowUpDate: getDateInMonth(15),
     notes: "Completed Facebook and Google Ads campaign. Deal closed successfully!",
+    phone: "",
+    email: "",
     createdAt: getDateInMonth(2),
   },
   {
@@ -55,6 +61,8 @@ export const dummyLeads: Lead[] = [
     expectedCommission: 2800,
     nextFollowUpDate: getDateInMonth(9),
     notes: "Initial consultation done. Following up on brand strategy proposal.",
+    phone: "",
+    email: "",
     createdAt: getDateInMonth(4),
   },
   {
@@ -67,6 +75,8 @@ export const dummyLeads: Lead[] = [
     expectedCommission: 4200,
     nextFollowUpDate: getDateInMonth(11),
     notes: "First contact made via LinkedIn. Interested in growth hacking services.",
+    phone: "",
+    email: "",
     createdAt: getDateInMonth(5),
   },
   {
@@ -79,6 +89,8 @@ export const dummyLeads: Lead[] = [
     expectedCommission: 2000,
     nextFollowUpDate: getDateInMonth(13),
     notes: "Referral from existing client. Wants to expand to online sales.",
+    phone: "",
+    email: "",
     createdAt: getDateInMonth(6),
   },
   {
@@ -91,6 +103,8 @@ export const dummyLeads: Lead[] = [
     expectedCommission: 3200,
     nextFollowUpDate: getDateInMonth(14),
     notes: "Sent comprehensive digital marketing proposal for 3 branches expansion.",
+    phone: "",
+    email: "",
     createdAt: getDateInMonth(1),
   },
   {
@@ -103,6 +117,8 @@ export const dummyLeads: Lead[] = [
     expectedCommission: 0,
     nextFollowUpDate: getDateInMonth(16),
     notes: "Client chose competitor. Great learning opportunity.",
+    phone: "",
+    email: "",
     createdAt: getDateInMonth(2),
   },
 ];
