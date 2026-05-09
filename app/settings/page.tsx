@@ -5,14 +5,29 @@ import {
   useCommissionRules,
   type CommissionRules,
 } from "@/lib/commissionRules";
+import { dummyIncomeEntries, dummyLeads } from "@/lib/dummyData";
 import { useGoalSettings } from "@/lib/goalSettings";
 import { ThemeId } from "@/lib/themes";
 import { formatCurrency } from "@/lib/utils";
+import { updateHistory } from "@/lib/appHistory";
+import { useState } from "react";
 
 export default function SettingsPage() {
   const { themeId, setThemeId, selectedTheme, themes } = useTheme();
   const { rules, setRules } = useCommissionRules();
   const { goal, setGoal } = useGoalSettings();
+  const [demoLoaded, setDemoLoaded] = useState(false);
+
+  function loadDemoData() {
+    updateHistory((snapshot) => ({
+      ...snapshot,
+      crm: {
+        leads: dummyLeads,
+        incomeEntries: dummyIncomeEntries,
+      },
+    }));
+    setDemoLoaded(true);
+  }
 
   function updateDomya(next: Partial<CommissionRules["domya"]>) {
     setRules({
@@ -165,16 +180,23 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            {/* App preferences placeholder */}
+            {/* Demo Data */}
             <section className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-6 backdrop-blur-sm">
-              <h2 className="text-lg font-semibold text-white">App preferences</h2>
+              <h2 className="text-lg font-semibold text-white">Demo Data</h2>
               <p className="mt-2 text-sm text-slate-400">
-                More workspace preferences will live here later.
+                Load 20 sample leads and income entries to showcase the app with realistic data.
               </p>
-              <div className="mt-5 rounded-xl border border-slate-700/50 bg-slate-700/20 p-4">
-                <p className="text-sm font-medium text-white">Coming soon</p>
-                <p className="mt-1 text-sm text-slate-400">
-                  Defaults, reminders, display density, and export settings.
+              <div className="mt-5">
+                <button
+                  type="button"
+                  onClick={loadDemoData}
+                  disabled={demoLoaded}
+                  className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {demoLoaded ? "Demo data loaded!" : "Load Demo Data"}
+                </button>
+                <p className="mt-3 text-xs text-slate-500">
+                  This replaces your current leads and income with demo data. You can undo with Ctrl+Z.
                 </p>
               </div>
             </section>
