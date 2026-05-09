@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logout } from "@/app/auth/actions";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -49,6 +50,15 @@ export function Navigation() {
             )}
           </Link>
         ))}
+        <form action={logout} className="shrink-0 lg:mt-4">
+          <button
+            type="submit"
+            className="flex w-full items-center space-x-3 rounded-lg px-4 py-3 text-left text-slate-400 transition-all hover:bg-slate-800/50 hover:text-slate-200"
+          >
+            <span className="text-xs font-bold">LO</span>
+            <span className="text-sm font-medium">Logout</span>
+          </button>
+        </form>
       </nav>
 
       <div className="hidden border-t border-slate-800 px-6 py-4 lg:block">

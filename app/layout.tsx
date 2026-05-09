@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Navigation } from "@/components/Navigation";
+import { AuthShell } from "@/components/AuthShell";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { UndoRedoControls } from "@/components/UndoRedoControls";
 
 export const metadata: Metadata = {
   title: "Personal CRM Dashboard",
@@ -23,11 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="theme-app bg-slate-950 text-slate-100">
         <ThemeProvider>
-          <Navigation />
-          <div className="min-h-screen lg:ml-64">
-            <UndoRedoControls />
-            {children}
-          </div>
+          <AuthShell>{children}</AuthShell>
         </ThemeProvider>
       </body>
     </html>
