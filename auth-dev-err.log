@@ -11099,3 +11099,52 @@ Import traces:
     code: 'UND_ERR_CONNECT_TIMEOUT'
   }
 }
+[browser] Uncaught Error: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <RedirectBoundary>
+      <RedirectErrorBoundary router={{...}}>
+        <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+          <SegmentViewNode type="page" pagePath="page.tsx">
+            <SegmentTrieNode>
+            <ClientPageRoot Component={function Home} serverProvidedParams={{...}}>
+              <Home params={Promise} searchParams={Promise}>
+                <main className="min-h-scre...">
+                  <div className="mx-auto ma...">
+                    <div>
+                    <div className="mb-8 grid ...">
+                      <DashboardCard title="Monthly In..." value="EGP 34,800.00" trend="up" footer={undefined}>
+                        <div className="rounded-xl...">
+                          <div className="flex items...">
+                            <div className="min-w-0 fl...">
+                              <p>
+                              <p className="mt-2.5 break-words text-xl font-bold leading-tight text-white sm:text-2xl">
++                               EGP 34,800.00
+-                               EGP 0.00
+                          ...
+                      ...
+                    ...
+          ...
+        ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at p (<anonymous>)
+    at DashboardCard (components/DashboardCard.tsx:20:11)
+    at Home (app/page.tsx:70:11)
+  18 |         <div className="min-w-0 flex-1">
+  19 |           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{title...
+> 20 |           <p className="mt-2.5 break-words text-xl font-bold leading-tight text-white sm:t...
+     |           ^
+  21 |             {value}
+  22 |           </p>
+  23 |           {subtext && <p className="mt-1 text-xs text-slate-500">{subtext}</p>}
