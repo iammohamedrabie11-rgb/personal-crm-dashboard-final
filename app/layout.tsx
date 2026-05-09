@@ -1,29 +1,26 @@
 import type { Metadata } from "next";
-import "./globals.css";
-import { Navigation } from "@/components/Navigation";
+import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { UndoRedoControls } from "@/components/UndoRedoControls";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Personal CRM Dashboard",
-  description: "Track leads, income, and follow-ups",
+  title: "CRM Dashboard",
+  description: "Personal CRM and Finance Dashboard",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en">
-      <body className="theme-app bg-slate-950 text-slate-100">
-        <ThemeProvider>
-          <Navigation />
-          <div className="min-h-screen lg:ml-64">
-            <UndoRedoControls />
-            {children}
-          </div>
-        </ThemeProvider>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
