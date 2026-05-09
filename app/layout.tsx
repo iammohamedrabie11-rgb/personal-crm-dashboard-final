@@ -7,6 +7,11 @@ import { UndoRedoControls } from "@/components/UndoRedoControls";
 export const metadata: Metadata = {
   title: "Personal CRM Dashboard",
   description: "Track leads, income, and follow-ups",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
+};
 };
 
 export default function RootLayout({
