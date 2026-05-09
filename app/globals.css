@@ -1,0 +1,440 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --font-geist-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --app-bg: #0f172a;
+  --sidebar-bg: #020617;
+  --sidebar-text: #f8fafc;
+  --sidebar-muted: #94a3b8;
+  --surface: rgba(30, 41, 59, 0.72);
+  --surface-strong: rgba(15, 23, 42, 0.92);
+  --surface-muted: rgba(51, 65, 85, 0.34);
+  --surface-hover: rgba(51, 65, 85, 0.56);
+  --border: rgba(148, 163, 184, 0.25);
+  --border-strong: rgba(148, 163, 184, 0.42);
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-soft: #cbd5e1;
+  --accent: #2563eb;
+  --accent-hover: #3b82f6;
+  --accent-text: #ffffff;
+  --accent-soft: rgba(37, 99, 235, 0.18);
+  --secondary: #06b6d4;
+  --success: #34d399;
+  --success-bg: rgba(16, 185, 129, 0.18);
+  --warning: #fbbf24;
+  --warning-bg: rgba(245, 158, 11, 0.18);
+  --danger: #fb7185;
+  --danger-bg: rgba(225, 29, 72, 0.18);
+  --input-bg: rgba(2, 6, 23, 0.72);
+  --input-border: rgba(148, 163, 184, 0.28);
+  --modal-bg: rgba(15, 23, 42, 0.96);
+  --overlay: rgba(2, 6, 23, 0.76);
+  --table-hover: rgba(51, 65, 85, 0.32);
+  --chart-1: #38bdf8;
+  --chart-2: #34d399;
+  --chart-3: #f59e0b;
+  --chart-4: #f472b6;
+  --chart-5: #a78bfa;
+  --radius-card: 0.75rem;
+  --radius-control: 0.5rem;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+  --surface-filter: blur(10px);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--text);
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Theme bridge for the existing Tailwind-heavy UI. */
+body.theme-app {
+  background: var(--app-bg);
+  color: var(--text);
+}
+
+.theme-app main[class*="bg-slate-950"] {
+  background: transparent !important;
+}
+
+.theme-app aside {
+  background: var(--sidebar-bg) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow);
+}
+
+.theme-app aside [class*="border-slate"] {
+  border-color: var(--border) !important;
+}
+
+.theme-app aside a {
+  border-radius: var(--radius-control) !important;
+}
+
+.theme-app aside a[class*="bg-blue-600"] {
+  background: var(--accent) !important;
+  color: var(--accent-text) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.theme-app aside a:not([class*="bg-blue-600"]) {
+  color: var(--text-muted) !important;
+}
+
+.theme-app aside a:not([class*="bg-blue-600"]):hover {
+  background: var(--surface-hover) !important;
+  color: var(--text) !important;
+}
+
+.theme-app [class*="from-blue-500"][class*="to-blue-600"] {
+  background: var(--accent) !important;
+  color: var(--accent-text) !important;
+}
+
+.theme-app [class*="bg-slate-800/40"],
+.theme-app [class*="bg-slate-900/70"],
+.theme-app [class*="bg-slate-900"] {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--surface-filter);
+}
+
+.theme-app [class*="bg-slate-700/20"],
+.theme-app [class*="bg-slate-700/30"],
+.theme-app [class*="bg-slate-700/50"] {
+  background: var(--surface-muted) !important;
+  border-color: var(--border) !important;
+}
+
+.theme-app [class*="bg-slate-700"]:not([class*="/"]) {
+  background: var(--surface-muted) !important;
+}
+
+.theme-app [class*="hover:bg-slate-700"]:hover,
+.theme-app [class*="hover:bg-slate-800"]:hover,
+.theme-app tr:hover {
+  background: var(--table-hover) !important;
+}
+
+.theme-app [class*="border-slate"] {
+  border-color: var(--border) !important;
+}
+
+.theme-app [class*="hover:border-slate"]:hover {
+  border-color: var(--border-strong) !important;
+}
+
+.theme-app [class*="text-white"],
+.theme-app [class*="text-slate-100"],
+.theme-app [class*="text-slate-200"] {
+  color: var(--text) !important;
+}
+
+.theme-app [class*="text-slate-300"] {
+  color: var(--text-soft) !important;
+}
+
+.theme-app [class*="text-slate-400"],
+.theme-app [class*="text-slate-500"],
+.theme-app [class*="text-gray-"] {
+  color: var(--text-muted) !important;
+}
+
+.theme-app input,
+.theme-app select,
+.theme-app textarea,
+.theme-app input[class*="bg-slate-950"],
+.theme-app select[class*="bg-slate-950"] {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text) !important;
+  border-radius: var(--radius-control) !important;
+}
+
+.theme-app input:focus,
+.theme-app select:focus,
+.theme-app textarea:focus {
+  border-color: var(--accent) !important;
+  outline: none;
+}
+
+.theme-app [class*="bg-blue-600"],
+.theme-app [class*="bg-blue-500"] {
+  background: var(--accent) !important;
+  color: var(--accent-text) !important;
+}
+
+.theme-app [class*="hover:bg-blue-500"]:hover,
+.theme-app [class*="hover:bg-blue-600"]:hover {
+  background: var(--accent-hover) !important;
+}
+
+.theme-app [class*="text-blue-"],
+.theme-app [class*="text-cyan-"] {
+  color: var(--accent) !important;
+}
+
+.theme-app [class*="bg-blue-900"],
+.theme-app [class*="bg-cyan-900"],
+.theme-app [class*="bg-indigo-900"],
+.theme-app [class*="bg-purple-900"] {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+}
+
+.theme-app [class*="text-emerald-"],
+.theme-app [class*="text-green-"] {
+  color: var(--success) !important;
+}
+
+.theme-app [class*="bg-emerald-"],
+.theme-app [class*="bg-green-"] {
+  background: var(--success-bg) !important;
+  color: var(--success) !important;
+}
+
+.theme-app button[class*="bg-emerald-"],
+.theme-app [class*="bg-emerald-500"] {
+  background: var(--success) !important;
+  color: var(--accent-text) !important;
+}
+
+.theme-app [class*="border-emerald-"],
+.theme-app [class*="border-green-"] {
+  border-color: var(--success) !important;
+}
+
+.theme-app [class*="text-amber-"],
+.theme-app [class*="text-yellow-"] {
+  color: var(--warning) !important;
+}
+
+.theme-app [class*="bg-amber-"],
+.theme-app [class*="bg-yellow-"] {
+  background: var(--warning-bg) !important;
+  color: var(--warning) !important;
+}
+
+.theme-app [class*="border-amber-"],
+.theme-app [class*="border-yellow-"] {
+  border-color: var(--warning) !important;
+}
+
+.theme-app [class*="text-rose-"],
+.theme-app [class*="text-red-"] {
+  color: var(--danger) !important;
+}
+
+.theme-app [class*="bg-rose-"],
+.theme-app [class*="bg-red-"] {
+  background: var(--danger-bg) !important;
+  color: var(--danger) !important;
+}
+
+.theme-app [class*="border-rose-"],
+.theme-app [class*="border-red-"] {
+  border-color: var(--danger) !important;
+}
+
+.theme-app button[class*="bg-rose-"],
+.theme-app button[class*="bg-red-"] {
+  background: var(--danger) !important;
+  color: var(--accent-text) !important;
+}
+
+.theme-app [class*="bg-slate-950/75"] {
+  background: var(--overlay) !important;
+}
+
+.theme-app [role="dialog"] > div {
+  background: var(--modal-bg) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow) !important;
+  backdrop-filter: var(--surface-filter);
+}
+
+.theme-app [class*="rounded-xl"] {
+  border-radius: var(--radius-card) !important;
+}
+
+.theme-app [class*="rounded-lg"],
+.theme-app [class*="rounded-md"] {
+  border-radius: var(--radius-control) !important;
+}
+
+.theme-app table {
+  background: transparent;
+}
+
+.theme-app th {
+  color: var(--text-soft) !important;
+  border-color: var(--border) !important;
+}
+
+.theme-app td {
+  border-color: var(--border) !important;
+}
+
+.theme-app .crm-badge {
+  display: inline-flex;
+  min-height: 1.65rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px !important;
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  padding: 0.35rem 0.7rem !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.22);
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
+}
+
+.theme-app .crm-status-new,
+.theme-app .crm-status-meeting,
+.theme-app .crm-finance-status-planned {
+  background: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 55%, #111827 45%) !important;
+}
+
+.theme-app .crm-status-contacted,
+.theme-app .crm-status-proposal,
+.theme-app .crm-agency-domya,
+.theme-app .crm-finance-status-recurring {
+  background: var(--secondary) !important;
+  background: color-mix(in srgb, var(--secondary) 58%, #111827 42%) !important;
+}
+
+.theme-app .crm-status-follow-up,
+.theme-app .crm-agency-personal,
+.theme-app .crm-finance-status-upcoming {
+  background: var(--warning) !important;
+  background: color-mix(in srgb, var(--warning) 30%, #78350f 70%) !important;
+}
+
+.theme-app .crm-status-closed,
+.theme-app .crm-agency-freelance,
+.theme-app .crm-finance-status-paid,
+.theme-app .crm-finance-status-received {
+  background: var(--success) !important;
+  background: color-mix(in srgb, var(--success) 30%, #064e3b 70%) !important;
+}
+
+.theme-app .crm-status-lost,
+.theme-app .crm-agency-krijo,
+.theme-app .crm-finance-status-missed {
+  background: var(--danger) !important;
+  background: color-mix(in srgb, var(--danger) 55%, #7f1d1d 45%) !important;
+}
+
+.theme-app .crm-agency-default,
+.theme-app .crm-finance-status-default {
+  background: var(--text-muted) !important;
+  background: color-mix(in srgb, var(--text-muted) 70%, #111827 30%) !important;
+}
+
+.theme-chart-1 {
+  background: var(--chart-1) !important;
+}
+
+.theme-chart-2 {
+  background: var(--chart-2) !important;
+}
+
+.theme-chart-3 {
+  background: var(--chart-3) !important;
+}
+
+.theme-chart-4 {
+  background: var(--chart-4) !important;
+}
+
+.theme-chart-5 {
+  background: var(--chart-5) !important;
+}
+
+.theme-app aside h1,
+.theme-app aside [class*="text-white"] {
+  color: var(--sidebar-text, var(--text)) !important;
+}
+
+.theme-app aside p,
+.theme-app aside [class*="text-slate-400"],
+.theme-app aside [class*="text-slate-500"] {
+  color: var(--sidebar-muted, var(--text-muted)) !important;
+}
+
+.theme-app aside a:not([class*="bg-blue-600"]) span {
+  color: var(--sidebar-muted, var(--text-muted)) !important;
+}
+
+.theme-app aside a:not([class*="bg-blue-600"]):hover span {
+  color: var(--sidebar-text, var(--text)) !important;
+}
+
+.theme-app aside a[class*="bg-blue-600"],
+.theme-app aside a[class*="bg-blue-600"] span {
+  color: var(--accent-text) !important;
+}
+
+[data-theme="retro-windows"] .theme-app {
+  font-family: Tahoma, var(--font-sans, system-ui, sans-serif);
+}
+
+[data-theme="retro-windows"] .theme-app [class*="uppercase"] {
+  letter-spacing: 0 !important;
+}
