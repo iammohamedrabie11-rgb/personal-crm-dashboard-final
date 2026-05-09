@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import {
   useCommissionRules,
@@ -15,30 +14,22 @@ export default function SettingsPage() {
   const { rules, setRules } = useCommissionRules();
   const { goal, setGoal } = useGoalSettings();
 
-  // Local draft states for commission inputs (committed on blur)
-  const [domyaBase, setDomyaBase] = useState(() => String(rules.domya.baseAmount));
-  const [domyaPct, setDomyaPct] = useState(() => String(rules.domya.percentage));
-  const [krijoFlat, setKrijoFlat] = useState(() => String(rules.krijo.flatAmount));
-  const [krijoPct, setKrijoPct] = useState(() => String(rules.krijo.percentage));
-  const [goalDraft, setGoalDraft] = useState(() => String(goal.monthlyIncomeGoal || ""));
-
-  function commitDomya() {
+  function updateDomya(next: Partial<CommissionRules["domya"]>) {
     setRules({
       ...rules,
       domya: {
-        baseAmount: Number(domyaBase) || 0,
-        percentage: Number(domyaPct) || 0,
+        ...rules.domya,
+        ...next,
       },
     });
   }
 
-  function commitKrijo() {
+  function updateKrijo(next: Partial<CommissionRules["krijo"]>) {
     setRules({
       ...rules,
       krijo: {
         ...rules.krijo,
-        flatAmount: Number(krijoFlat) || 0,
-        percentage: Number(krijoPct) || 0,
+        ...next,
       },
     });
   }
@@ -52,10 +43,6 @@ export default function SettingsPage() {
       },
     };
     setRules(next);
-  }
-
-  function commitGoal() {
-    setGoal({ monthlyIncomeGoal: Number(goalDraft) || 0 });
   }
 
   const domyaPreview =
@@ -162,9 +149,10 @@ export default function SettingsPage() {
                     type="number"
                     min="0"
                     step="100"
-                    value={goalDraft}
-                    onChange={(e) => setGoalDraft(e.target.value)}
-                    onBlur={commitGoal}
+                    value={goal.monthlyIncomeGoal || ""}
+                    onChange={(e) =>
+                      setGoal({ monthlyIncomeGoal: Number(e.target.value) || 0 })
+                    }
                     placeholder="e.g. 50000"
                     className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                   />
@@ -222,9 +210,10 @@ export default function SettingsPage() {
                       type="number"
                       min="0"
                       step="100"
-                      value={domyaBase}
-                      onChange={(e) => setDomyaBase(e.target.value)}
-                      onBlur={commitDomya}
+                      value={rules.domya.baseAmount || ""}
+                      onChange={(e) =>
+                        updateDomya({ baseAmount: Number(e.target.value) || 0 })
+                      }
                       className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                     />
                   </label>
@@ -235,9 +224,10 @@ export default function SettingsPage() {
                       min="0"
                       max="100"
                       step="0.5"
-                      value={domyaPct}
-                      onChange={(e) => setDomyaPct(e.target.value)}
-                      onBlur={commitDomya}
+                      value={rules.domya.percentage || ""}
+                      onChange={(e) =>
+                        updateDomya({ percentage: Number(e.target.value) || 0 })
+                      }
                       className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                     />
                   </label>
@@ -254,7 +244,7 @@ export default function SettingsPage() {
                     onClick={toggleKrijoMode}
                     className="rounded-full border border-slate-600 bg-slate-800 px-3 py-0.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-700"
                   >
-                    Mode: {rules.krijo.mode === "flat" ? "Flat amount" : "Percentage"} ↕
+                    Mode: {rules.krijo.mode === "flat" ? "Flat amount" : "Percentage"}
                   </button>
                 </div>
                 <p className="mb-4 text-xs text-slate-500">
@@ -269,9 +259,10 @@ export default function SettingsPage() {
                       type="number"
                       min="0"
                       step="100"
-                      value={krijoFlat}
-                      onChange={(e) => setKrijoFlat(e.target.value)}
-                      onBlur={commitKrijo}
+                      value={rules.krijo.flatAmount || ""}
+                      onChange={(e) =>
+                        updateKrijo({ flatAmount: Number(e.target.value) || 0 })
+                      }
                       className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                     />
                   </label>
@@ -283,9 +274,10 @@ export default function SettingsPage() {
                       min="0"
                       max="100"
                       step="0.5"
-                      value={krijoPct}
-                      onChange={(e) => setKrijoPct(e.target.value)}
-                      onBlur={commitKrijo}
+                      value={rules.krijo.percentage || ""}
+                      onChange={(e) =>
+                        updateKrijo({ percentage: Number(e.target.value) || 0 })
+                      }
                       className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
                     />
                   </label>

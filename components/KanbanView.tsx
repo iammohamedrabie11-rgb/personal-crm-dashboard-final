@@ -1,7 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { Lead, LeadStatus } from "@/lib/types";
-import { formatCurrency, formatDate, getAgencyColor } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatDate,
+  getAgencyColor,
+  makeWhatsAppUrl,
+} from "@/lib/utils";
 
 const ORDERED_STATUSES: LeadStatus[] = [
   "New Lead",
@@ -46,10 +52,10 @@ interface KanbanViewProps {
   leads: Lead[];
   onEdit: (lead: Lead) => void;
   onMove: (lead: Lead, newStatus: LeadStatus) => void;
-  onSuggest: (lead: Lead) => void;
 }
 
-export function KanbanView({ leads, onEdit, onMove, onSuggest }: KanbanViewProps) {
+export function KanbanView({ leads, onEdit, onMove }: KanbanViewProps) {
+  const [dragOverStatus, setDragOverStatus] = useState<LeadStatus | null>(null);
   const byStatus = Object.fromEntries(
     ORDERED_STATUSES.map((status) => [
       status,
@@ -61,10 +67,38 @@ export function KanbanView({ leads, onEdit, onMove, onSuggest }: KanbanViewProps
     <div className="flex gap-4 overflow-x-auto pb-4">
       {ORDERED_STATUSES.map((status) => {
         const columnLeads = byStatus[status];
+        const isDragTarget = dragOverStatus === status;
+
         return (
           <div
             key={status}
-            className={`flex w-64 shrink-0 flex-col rounded-xl border ${COLUMN_COLORS[status]} p-3`}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragOverStatus(status);
+            }}
+            onDragLeave={(event) => {
+              const nextTarget = event.relatedTarget;
+              if (
+                nextTarget instanceof Node &&
+                event.currentTarget.contains(nextTarget)
+              ) {
+                return;
+              }
+              setDragOverStatus(null);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              const leadId = event.dataTransfer.getData("text/plain");
+              const lead = leads.find((item) => item.id === leadId);
+              setDragOverStatus(null);
+
+              if (lead && lead.status !== status) {
+                onMove(lead, status);
+              }
+            }}
+            className={`flex w-64 shrink-0 flex-col rounded-xl border ${COLUMN_COLORS[status]} p-3 transition-colors ${
+              isDragTarget ? "ring-2 ring-blue-400/60" : ""
+            }`}
           >
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className={`text-xs font-semibold uppercase tracking-wide ${HEADER_COLORS[status]}`}>
@@ -82,7 +116,7 @@ export function KanbanView({ leads, onEdit, onMove, onSuggest }: KanbanViewProps
                   lead={lead}
                   onEdit={onEdit}
                   onMove={onMove}
-                  onSuggest={onSuggest}
+                  onDragStart={() => setDragOverStatus(null)}
                 />
               ))}
               {columnLeads.length === 0 && (
@@ -100,14 +134,28 @@ interface KanbanCardProps {
   lead: Lead;
   onEdit: (lead: Lead) => void;
   onMove: (lead: Lead, newStatus: LeadStatus) => void;
-  onSuggest: (lead: Lead) => void;
+  onDragStart: () => void;
 }
 
-function KanbanCard({ lead, onEdit, onMove, onSuggest }: KanbanCardProps) {
+function KanbanCard({
+  lead,
+  onEdit,
+  onMove,
+  onDragStart,
+}: KanbanCardProps) {
   const nextStatus = NEXT_STATUS[lead.status];
+  const whatsappUrl = makeWhatsAppUrl(lead.phone);
 
   return (
-    <div className="rounded-lg border border-slate-700/50 bg-slate-800/60 p-3 backdrop-blur-sm">
+    <div
+      draggable
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", lead.id);
+        onDragStart();
+      }}
+      className="cursor-grab rounded-lg border border-slate-700/50 bg-slate-800/60 p-3 backdrop-blur-sm active:cursor-grabbing"
+    >
       <button
         type="button"
         onClick={() => onEdit(lead)}
@@ -143,9 +191,9 @@ function KanbanCard({ lead, onEdit, onMove, onSuggest }: KanbanCardProps) {
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {lead.phone && (
+        {whatsappUrl && (
           <a
-            href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+            href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded bg-emerald-900/60 px-2 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-800/60"
@@ -153,20 +201,13 @@ function KanbanCard({ lead, onEdit, onMove, onSuggest }: KanbanCardProps) {
             WA
           </a>
         )}
-        <button
-          type="button"
-          onClick={() => onSuggest(lead)}
-          className="rounded bg-violet-900/60 px-2 py-1 text-xs font-medium text-violet-300 hover:bg-violet-800/60"
-        >
-          Suggest
-        </button>
         {nextStatus && (
           <button
             type="button"
             onClick={() => onMove(lead, nextStatus)}
             className="rounded bg-slate-700/60 px-2 py-1 text-xs font-medium text-slate-300 hover:bg-slate-600/60"
           >
-            → {nextStatus}
+            Next: {nextStatus}
           </button>
         )}
       </div>

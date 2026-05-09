@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "crm-goal-settings";
+const CHANGE_EVENT = "crm-goal-settings-change";
 
 export interface GoalSettings {
   monthlyIncomeGoal: number;
@@ -12,15 +13,27 @@ const defaultGoalSettings: GoalSettings = {
   monthlyIncomeGoal: 0,
 };
 
+let cachedRawValue: string | null = null;
+let cachedGoal = defaultGoalSettings;
+
 function readGoal(): GoalSettings {
   if (typeof window === "undefined") return defaultGoalSettings;
+
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored) return defaultGoalSettings;
+    const stored = window.localStorage.getItem(STORAGE_KEY) ?? "";
+    if (stored === cachedRawValue) return cachedGoal;
+    if (!stored) {
+      cachedRawValue = stored;
+      cachedGoal = defaultGoalSettings;
+      return cachedGoal;
+    }
+
     const parsed = JSON.parse(stored) as Partial<GoalSettings>;
-    return {
+    cachedRawValue = stored;
+    cachedGoal = {
       monthlyIncomeGoal: Number(parsed.monthlyIncomeGoal ?? 0),
     };
+    return cachedGoal;
   } catch {
     return defaultGoalSettings;
   }
@@ -28,19 +41,34 @@ function readGoal(): GoalSettings {
 
 function writeGoal(settings: GoalSettings) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  const serialized = JSON.stringify(settings);
+  cachedRawValue = serialized;
+  cachedGoal = settings;
+  window.localStorage.setItem(STORAGE_KEY, serialized);
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+function subscribeToGoal(onChange: () => void) {
+  if (typeof window === "undefined") return () => {};
+
+  window.addEventListener(CHANGE_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+
+  return () => {
+    window.removeEventListener(CHANGE_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
 }
 
 export function useGoalSettings() {
-  const [goal, setGoalState] = useState<GoalSettings>(defaultGoalSettings);
-
-  useEffect(() => {
-    setGoalState(readGoal());
-  }, []);
+  const goal = useSyncExternalStore(
+    subscribeToGoal,
+    readGoal,
+    () => defaultGoalSettings
+  );
 
   function setGoal(next: GoalSettings) {
     writeGoal(next);
-    setGoalState(next);
   }
 
   return { goal, setGoal };

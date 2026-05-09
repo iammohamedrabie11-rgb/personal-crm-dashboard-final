@@ -506,6 +506,28 @@ function diffArrays<T extends { id: string }>(
   return { inserts, updates, deletes };
 }
 
+type SupabaseWriteOperation = PromiseLike<{
+  error?: { message?: string } | null;
+}>;
+
+async function runSupabaseWrites(
+  label: string,
+  operations: SupabaseWriteOperation[]
+) {
+  if (operations.length === 0) return;
+
+  const results = await Promise.all(
+    operations.map((operation) => Promise.resolve(operation))
+  );
+  const failed = results.find((result) => result.error);
+
+  if (failed?.error) {
+    throw new Error(
+      `${label}: ${failed.error.message ?? "Supabase write failed."}`
+    );
+  }
+}
+
 async function diffAndSyncTables(
   userId: string,
   oldSnapshot: AppSnapshot,
@@ -535,15 +557,17 @@ async function diffAndSyncTables(
     newSnapshot.finance.plannedPayments
   );
 
-  const ops: PromiseLike<unknown>[] = [];
+  const parentWrites: SupabaseWriteOperation[] = [];
+  const childWrites: SupabaseWriteOperation[] = [];
+  const parentDeletes: SupabaseWriteOperation[] = [];
 
   // leads
   if (leadDiff.inserts.length)
-    ops.push(
+    parentWrites.push(
       client.from("leads").insert(leadDiff.inserts.map((l) => leadToRow(l, userId)))
     );
   for (const lead of leadDiff.updates)
-    ops.push(
+    parentWrites.push(
       client
         .from("leads")
         .update(leadToRow(lead, userId))
@@ -551,17 +575,17 @@ async function diffAndSyncTables(
         .eq("user_id", userId)
     );
   for (const id of leadDiff.deletes)
-    ops.push(client.from("leads").delete().eq("id", id).eq("user_id", userId));
+    parentDeletes.push(client.from("leads").delete().eq("id", id).eq("user_id", userId));
 
   // income_entries
   if (incomeDiff.inserts.length)
-    ops.push(
+    childWrites.push(
       client
         .from("income_entries")
         .insert(incomeDiff.inserts.map((e) => incomeEntryToRow(e, userId)))
     );
   for (const entry of incomeDiff.updates)
-    ops.push(
+    childWrites.push(
       client
         .from("income_entries")
         .update(incomeEntryToRow(entry, userId))
@@ -569,19 +593,19 @@ async function diffAndSyncTables(
         .eq("user_id", userId)
     );
   for (const id of incomeDiff.deletes)
-    ops.push(
+    childWrites.push(
       client.from("income_entries").delete().eq("id", id).eq("user_id", userId)
     );
 
   // finance_accounts (must go before expenses/payments due to FK)
   if (accountDiff.inserts.length)
-    ops.push(
+    parentWrites.push(
       client
         .from("finance_accounts")
         .insert(accountDiff.inserts.map((a) => accountToRow(a, userId)))
     );
   for (const account of accountDiff.updates)
-    ops.push(
+    parentWrites.push(
       client
         .from("finance_accounts")
         .update(accountToRow(account, userId))
@@ -589,7 +613,7 @@ async function diffAndSyncTables(
         .eq("user_id", userId)
     );
   for (const id of accountDiff.deletes)
-    ops.push(
+    parentDeletes.push(
       client
         .from("finance_accounts")
         .delete()
@@ -599,13 +623,13 @@ async function diffAndSyncTables(
 
   // finance_expenses
   if (expenseDiff.inserts.length)
-    ops.push(
+    childWrites.push(
       client
         .from("finance_expenses")
         .insert(expenseDiff.inserts.map((e) => expenseToRow(e, userId)))
     );
   for (const expense of expenseDiff.updates)
-    ops.push(
+    childWrites.push(
       client
         .from("finance_expenses")
         .update(expenseToRow(expense, userId))
@@ -613,7 +637,7 @@ async function diffAndSyncTables(
         .eq("user_id", userId)
     );
   for (const id of expenseDiff.deletes)
-    ops.push(
+    childWrites.push(
       client
         .from("finance_expenses")
         .delete()
@@ -623,13 +647,13 @@ async function diffAndSyncTables(
 
   // finance_budgets
   if (budgetDiff.inserts.length)
-    ops.push(
+    childWrites.push(
       client
         .from("finance_budgets")
         .insert(budgetDiff.inserts.map((b) => budgetToRow(b, userId)))
     );
   for (const budget of budgetDiff.updates)
-    ops.push(
+    childWrites.push(
       client
         .from("finance_budgets")
         .update(budgetToRow(budget, userId))
@@ -637,7 +661,7 @@ async function diffAndSyncTables(
         .eq("user_id", userId)
     );
   for (const id of budgetDiff.deletes)
-    ops.push(
+    childWrites.push(
       client
         .from("finance_budgets")
         .delete()
@@ -647,13 +671,13 @@ async function diffAndSyncTables(
 
   // planned_payments
   if (paymentDiff.inserts.length)
-    ops.push(
+    childWrites.push(
       client
         .from("planned_payments")
         .insert(paymentDiff.inserts.map((p) => paymentToRow(p, userId)))
     );
   for (const payment of paymentDiff.updates)
-    ops.push(
+    childWrites.push(
       client
         .from("planned_payments")
         .update(paymentToRow(payment, userId))
@@ -661,7 +685,7 @@ async function diffAndSyncTables(
         .eq("user_id", userId)
     );
   for (const id of paymentDiff.deletes)
-    ops.push(
+    childWrites.push(
       client
         .from("planned_payments")
         .delete()
@@ -669,9 +693,9 @@ async function diffAndSyncTables(
         .eq("user_id", userId)
     );
 
-  const results = await Promise.allSettled(ops.map((op) => Promise.resolve(op)));
-  const failed = results.find((r) => r.status === "rejected");
-  if (failed && failed.status === "rejected") throw failed.reason as Error;
+  await runSupabaseWrites("Parent row writes", parentWrites);
+  await runSupabaseWrites("Dependent row writes", childWrites);
+  await runSupabaseWrites("Parent row deletes", parentDeletes);
 }
 
 // ─── One-time migration from app_snapshots JSONB ─────────────────────────────

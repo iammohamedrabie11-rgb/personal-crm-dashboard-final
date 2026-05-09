@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import type { Agency } from "./types";
 
 const STORAGE_KEY = "crm-commission-rules";
+const CHANGE_EVENT = "crm-commission-rules-change";
 
 export interface DomyaCommissionRule {
   baseAmount: number;
@@ -26,16 +27,28 @@ export const defaultCommissionRules: CommissionRules = {
   krijo: { mode: "flat", flatAmount: 0, percentage: 0 },
 };
 
+let cachedRawValue: string | null = null;
+let cachedRules = defaultCommissionRules;
+
 function readRules(): CommissionRules {
   if (typeof window === "undefined") return defaultCommissionRules;
+
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored) return defaultCommissionRules;
+    const stored = window.localStorage.getItem(STORAGE_KEY) ?? "";
+    if (stored === cachedRawValue) return cachedRules;
+    if (!stored) {
+      cachedRawValue = stored;
+      cachedRules = defaultCommissionRules;
+      return cachedRules;
+    }
+
     const parsed = JSON.parse(stored) as Partial<CommissionRules>;
-    return {
+    cachedRawValue = stored;
+    cachedRules = {
       domya: { ...defaultCommissionRules.domya, ...(parsed.domya ?? {}) },
       krijo: { ...defaultCommissionRules.krijo, ...(parsed.krijo ?? {}) },
     };
+    return cachedRules;
   } catch {
     return defaultCommissionRules;
   }
@@ -43,19 +56,34 @@ function readRules(): CommissionRules {
 
 function writeRules(rules: CommissionRules) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
+  const serialized = JSON.stringify(rules);
+  cachedRawValue = serialized;
+  cachedRules = rules;
+  window.localStorage.setItem(STORAGE_KEY, serialized);
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+function subscribeToRules(onChange: () => void) {
+  if (typeof window === "undefined") return () => {};
+
+  window.addEventListener(CHANGE_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+
+  return () => {
+    window.removeEventListener(CHANGE_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
 }
 
 export function useCommissionRules() {
-  const [rules, setRulesState] = useState<CommissionRules>(defaultCommissionRules);
-
-  useEffect(() => {
-    setRulesState(readRules());
-  }, []);
+  const rules = useSyncExternalStore(
+    subscribeToRules,
+    readRules,
+    () => defaultCommissionRules
+  );
 
   function setRules(next: CommissionRules) {
     writeRules(next);
-    setRulesState(next);
   }
 
   return { rules, setRules };
@@ -68,11 +96,17 @@ export function calculateCommission(
   rules: CommissionRules
 ): number | null {
   if (agency === "Domya") {
+    if (rules.domya.baseAmount <= 0 && rules.domya.percentage <= 0) return null;
     return rules.domya.baseAmount + (rules.domya.percentage / 100) * dealValue;
   }
+
   if (agency === "Krijo") {
-    if (rules.krijo.mode === "flat") return rules.krijo.flatAmount;
+    if (rules.krijo.mode === "flat") {
+      return rules.krijo.flatAmount > 0 ? rules.krijo.flatAmount : null;
+    }
+    if (rules.krijo.percentage <= 0) return null;
     return (rules.krijo.percentage / 100) * dealValue;
   }
+
   return null;
 }

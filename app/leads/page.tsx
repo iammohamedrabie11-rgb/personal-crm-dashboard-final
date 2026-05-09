@@ -4,11 +4,15 @@ import { FormEvent, useMemo, useState } from "react";
 import { ConfirmDeleteModal } from "@/components/ConfirmDeleteModal";
 import { KanbanView } from "@/components/KanbanView";
 import { LeadsTable } from "@/components/LeadsTable";
-import { SuggestMessageModal } from "@/components/SuggestMessageModal";
 import { agencies, leadStatuses, useCrmData } from "@/lib/crmStorage";
 import { calculateCommission, useCommissionRules } from "@/lib/commissionRules";
 import { Agency, Lead, LeadStatus } from "@/lib/types";
-import { formatCurrency, getAgencyColor, getStatusColor } from "@/lib/utils";
+import {
+  formatCurrency,
+  getAgencyColor,
+  getStatusColor,
+  makeWhatsAppUrl,
+} from "@/lib/utils";
 
 type LeadFormState = Omit<Lead, "id" | "createdAt" | "updatedAt">;
 
@@ -27,14 +31,15 @@ const emptyLeadForm: LeadFormState = {
   email: "",
 };
 
+function readStoredView(): "table" | "kanban" {
+  if (typeof window === "undefined") return "table";
+  return localStorage.getItem("crm-leads-view") === "kanban" ? "kanban" : "table";
+}
+
 export default function LeadsPage() {
   const { leads, addLead, updateLead, deleteLead } = useCrmData();
   const { rules } = useCommissionRules();
-  const [view, setView] = useState<"table" | "kanban">(() => {
-    if (typeof window === "undefined") return "table";
-    return (localStorage.getItem("crm-leads-view") as "table" | "kanban") ?? "table";
-  });
-  const [suggestingLead, setSuggestingLead] = useState<Lead | null>(null);
+  const [view, setView] = useState<"table" | "kanban">(readStoredView);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [selectedAgency, setSelectedAgency] = useState<string | null>(null);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -409,25 +414,26 @@ export default function LeadsPage() {
               leads={filteredLeads}
               onEdit={openEditLeadForm}
               onMove={moveLead}
-              onSuggest={setSuggestingLead}
             />
           ) : (
             <LeadsTable
               leads={filteredLeads}
               onEdit={openEditLeadForm}
               onDelete={removeLead}
-              onSuggest={setSuggestingLead}
             />
           )}
         </div>
 
         {view === "table" && filteredLeads.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {filteredLeads.map((lead) => (
-              <div
-                key={lead.id}
-                className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-5 backdrop-blur-sm"
-              >
+            {filteredLeads.map((lead) => {
+              const whatsappUrl = makeWhatsAppUrl(lead.phone);
+
+              return (
+                <div
+                  key={lead.id}
+                  className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-5 backdrop-blur-sm"
+                >
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h3 className="break-words text-base font-semibold text-white">
@@ -477,9 +483,9 @@ export default function LeadsPage() {
                 )}
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {lead.phone && (
+                  {whatsappUrl && (
                     <a
-                      href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+                      href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="rounded-md bg-emerald-900 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-800"
@@ -487,13 +493,6 @@ export default function LeadsPage() {
                       WhatsApp
                     </a>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => setSuggestingLead(lead)}
-                    className="rounded-md bg-violet-900 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-800"
-                  >
-                    Suggest message
-                  </button>
                   <button
                     type="button"
                     onClick={() => openEditLeadForm(lead)}
@@ -510,7 +509,8 @@ export default function LeadsPage() {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : view === "table" ? (
           <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-12 text-center backdrop-blur-sm">
@@ -528,12 +528,6 @@ export default function LeadsPage() {
         onCancel={() => setLeadToDelete(null)}
         onConfirm={confirmLeadDeletion}
       />
-      {suggestingLead && (
-        <SuggestMessageModal
-          lead={suggestingLead}
-          onClose={() => setSuggestingLead(null)}
-        />
-      )}
     </main>
   );
 }

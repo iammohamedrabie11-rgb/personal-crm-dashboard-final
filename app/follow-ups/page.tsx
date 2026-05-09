@@ -4,7 +4,14 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { useCrmData } from "@/lib/crmStorage";
 import { Lead } from "@/lib/types";
-import { formatCurrency, formatDate, getAgencyColor, getDaysUntil, getStatusColor } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatDate,
+  getAgencyColor,
+  getDaysUntil,
+  getStatusColor,
+  makeWhatsAppUrl,
+} from "@/lib/utils";
 
 export default function FollowUpsPage() {
   const { leads, updateLead } = useCrmData();
@@ -28,6 +35,7 @@ export default function FollowUpsPage() {
   const FollowUpCard = ({ lead }: { lead: Lead }) => {
     const daysUntil = getDaysUntil(lead.nextFollowUpDate);
     const isOverdue = daysUntil < 0;
+    const whatsappUrl = makeWhatsAppUrl(lead.phone);
 
     let urgencyColor = "";
     let urgencyLabel = "";
@@ -98,9 +106,9 @@ export default function FollowUpsPage() {
         </div>
 
         <div className="mt-4 flex flex-col gap-2 border-t border-slate-700/30 pt-4 sm:flex-row">
-          {lead.phone && (
+          {whatsappUrl && (
             <a
-              href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-lg bg-emerald-900 px-4 py-2 text-center text-sm font-semibold text-emerald-200 transition-colors hover:bg-emerald-800"

@@ -53,6 +53,11 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
+export function makeWhatsAppUrl(phone: string | null | undefined): string | null {
+  const digits = phone?.replace(/\D/g, "") ?? "";
+  return digits ? `https://wa.me/${digits}` : null;
+}
+
 export function formatDate(dateString: string): string {
   const date = new Date(dateString + "T00:00:00");
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
